@@ -1,198 +1,128 @@
 <?php
 
 namespace API;
-$categories = [
-    [
-        'id' => 1,
-        'name' => 'Category1',
-        'parent' => null,
-        'childs' => [
-            [
-                'id' => 3,
-                'name' => 'Category3',
-                'parent' => 1,
-                'childs' => [
-                    [
-                        'id' => 5,
-                        'name' => 'Category5',
-                        'parent' => 3,
-                        'childs' => []
-                    ],
-                    [
-                        'id' => 5,
-                        'name' => 'Category5',
-                        'parent' => 3,
-                        'childs' => []
-                    ],
-                ]
-            ],
-            [
-                'id' => 4,
-                'name' => 'Category4',
-                'parent' => 1,
-                'childs' => [
-                    [
-                        'id' => 6,
-                        'name' => 'Category6',
-                        'parent' => 4,
-                        'childs' => [
-                            [
-                                'id' => 7,
-                                'name' => 'Category7',
-                                'parent' => 6,
-                                'childs' => []
-                            ],
-                        ]
-                    ],
-                ]
-            ],
-        ]
-    ],
-    [
-        'id' => 2,
-        'name' => 'Category2',
-        'parent' => null,
-        'childs' => [
-            [
-                'id' => 8,
-                'name' => 'Category8',
-                'parent' => 2,
-                'childs' => [
-                    [
-                        'id' => 9,
-                        'name' => 'Category9',
-                        'parent' => 8,
-                        'childs' => []
-                    ],
-                ]
-            ],
-            [
-                'id' => 10,
-                'name' => 'Category10',
-                'parent' => 2,
-                'childs' => []
-            ],
-        ]
-    ]
-];
-class Tasks
+use GuzzleHttp\Client;
+class Tickets
 {
-    public function test($strings)
+    private function connector($object) {
+        $url = 'https://devncie.freshdesk.com/api/v2/%s';
+        $url = sprintf($url, $object);
+        $client = new Client([
+            'base_uri' => $url,
+            'headers' => [
+                'Authorization' => base64_encode('9ehqwHdT7HBS4ZxhrRZb:X'),
+            ]
+        ]);
+        try {
+            $response = $client->request('GET');
+            $body = json_decode($response->getBody(), true);
+
+        } catch (RequestException $e) {
+            var_dump($e->getMessage());
+        }
+        return $body;
+    }
+
+    private function getContactById($id){
+        $requestItem = 'contacts/' . $id;
+      return $this->connector($requestItem);
+    }
+
+    private function getAgentById($id){
+        $requestItem = 'agents/' . $id;
+        return $this->connector($requestItem);
+    }
+
+    private function getGroupById($id)
     {
-        $prefix = [];
-        foreach ($strings as $string) {
-            $original_string = $string;
-            foreach ($strings as $str) {
-
-                $string = $original_string;
-                if ($string == $str){
-                    continue;
-                }
-                for ($i = strlen($string); $i >= 0; $i--) {
-                    if (!(substr($str, 0, strlen($string)) === $string)) {
-                        $string = substr($string, 0, -1);
-                    } else {
-                        if($string > $prefix || $string != $original_string){
-                            array_push($prefix, $string);
-                        }
-                    }
-                }
-            }
-
-        }
-
-        $freqArray = array_count_values($prefix);
-        $mostCom = max($freqArray);
-        $mostFreq = array_search($mostCom, $freqArray);
-
-        return $mostFreq;
+        $requestItem = 'groups/' . $id;
+        return $this->connector($requestItem);
     }
 
-    public function getUsers($users, $colloborators) {
-        $output_users = [];
-        foreach ($colloborators as $colloborator) {
-            $found = array_search($colloborator, array_column($users, 'id'));
-            if ($found !== false) {
-                $user = $users[$found];
-                array_push($output_users, $user);
-            }
-
-
-        }
-        return $output_users;
+    private function getCompanyById($id) {
+        $requestItem = 'companies/' . $id;
+        return $this->connector($requestItem);
     }
 
-    public function upgradeCategory(&$categories) {
-        $topLevelCategories = [];
-
-        function arrayWalk(&$array, &$topLevelCategories, $currentParent = 0) {
-            foreach ($array as $value) {
-                if(false === isset($value['parent'])) {
-                    $currentParent = $value['id'];
-                } else {
-                    $value['parent'] = $currentParent;
-                }
-
-                $topLevelCategories[] = $value;
-                arrayWalk($value['childs'], $topLevelCategories, $currentParent);
-                unset($value['childs']);
-            }
-        }
-
-
-        arrayWalk($categories, $topLevelCategories);
-
-        $reconstructedCategories = [];
-        foreach ($topLevelCategories as $category) {
-            if(false === isset($category['parent'])) {
-                $reconstructedCategories[$category['id']] = $category;
-                //array_push($reconstructedCategories[$category['id']], $category);
-                continue;
-            }
-            $reconstructedCategories[$category['parent']]['childs'][] = $category;
-            //array_push($reconstructedCategories[$category['parent']]['childs'][], $category);
-
-        }
-
-        return $reconstructedCategories;
+    private function getTicketComments($id) {
+        $requestItem = 'tickets/' . $id . '/reply';
+        $response = $this->connector($requestItem);
     }
+
+    private function getTicketStatusById($id){
+        $statusMapping = [
+            2 => 'Open',
+            3 => 'Pending',
+            4 => 'Resolved',
+            5 => 'Closed',
+        ];
+
+        return $statusMapping[$id];
+    }
+
+    private function getTicketPriorityById($id){
+        $priorityMapping = [
+            1 => 'Low',
+            2 => 'Medium',
+            3 => 'High',
+            4 => 'Urgent',
+        ];
+
+        return $priorityMapping[$id];
+    }
+
+
+    public function getTickets() {
+        $readyTickets = [];
+        $tickets = $this->connector('tickets');
+
+
+
+        foreach ($tickets as $ticket) {
+            $contact = [];
+
+            if($ticket['responder_id'] === $ticket['requester_id']) {
+                $contact = [
+                    'id' => $ticket['responder_id'],
+                'name' => $this->getAgentById($ticket['responder_id'])['contact']['name'],
+                'email' => $this->getAgentById($ticket['responder_id'])['contact']['email'],
+                ];
+
+            } else {
+                $contact = [
+                    'id' => $ticket['requester_id'],
+                    'name' => $this->getAgentById($ticket['requester_id'])['name'],
+                    'email' => $this->getAgentById($ticket['requester_id'])['email'],
+                ];
+            }
+
+            $readyTickets[] = [
+                'id' => $ticket['id'],
+                'subject' => $ticket['subject'],
+                'status' => $this->getTicketStatusById($ticket['status']),
+                'priority' => $this->getTicketPriorityById($ticket['priority']),
+                'agent_id' => $ticket['responder_id'],
+                'agent_name' => $this->getAgentById($ticket['responder_id'])['contact']['name'],
+                'agent_email' => $this->getAgentById($ticket['responder_id'])['contact']['email'],
+                'contact_id' => $contact['id'],
+                'contact_name' => $contact['name'],
+                'contact_email' => $contact['email'],
+                'group_id' => $ticket['group_id'],
+                'group_name' => $this->getGroupById($ticket['group_id'])['name'],
+                'company_id' => $ticket['company_id'],
+                'company_name' => $this->getCompanyById($ticket['company_id'])['name'],
+            ];
+        }
+        return $readyTickets;
+    }
+
 }
 
-$task = new Tasks();
+$migration = new Tickets();
 
+$result = $migration->getTickets();
 
-
-$result = $task->upgradeCategory($categories);
-var_dump($result);
-
-//$result = $task->test(["flower", "test", "flow","flight"]);
-
-$users = [
-    [
-        'id'    => 17,
-        'email' => 'test17@test.com',
-        'name'  => 'test17',
-        'phone' => '17'
-    ],
-    [
-        'id'    => 67,
-        'email' => 'test67@test.com',
-        'name'  => 'test67',
-        'phone' => '67'
-    ],
-    [
-        'id'    => 26,
-        'email' => 'test26@test.com',
-        'name'  => 'test26',
-        'phone' => '26'
-    ],
-];
-
-$colloborators = ['34', '17', '67', '745'];
-
-//$result = $task->getUsers($users, $colloborators);
-
-var_dump($result);
+echo $result;
 
 
 

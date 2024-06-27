@@ -1,0 +1,13 @@
+{
+  "name": "relokia/project",
+  "type": "project",
+  "require": {
+    "guzzlehttp/guzzle": "^7.3.0",
+    "zendesk/zendesk_api_client_php": "^3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "API\\": "API/"
+    }
+  }
+}

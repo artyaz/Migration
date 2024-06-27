@@ -116,7 +116,7 @@ $library->addBook($saleBook);
 $borrowBook = new BorrowBook(2, "Dune 2", "Name", true);
 $library->addBook($borrowBook);
 
-$member = new Member('Name', 1);
+$member = new Member('Name Lastname', 1);
 
 $library->borrowBook($borrowBook, $member);
 

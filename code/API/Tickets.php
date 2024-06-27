@@ -71,12 +71,12 @@ class Tickets
         return $priorityMapping[$id];
     }
 
+    private function reviewContact(){
 
+    }
     public function getTickets() {
         $readyTickets = [];
         $tickets = $this->connector('tickets');
-
-
 
         foreach ($tickets as $ticket) {
             $contact = [];

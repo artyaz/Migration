@@ -2,7 +2,6 @@
 
 include __DIR__ . '/vendor/autoload.php';
 
-use API\Tickets;
+use API\Freshdesk;
 
-$test = new Tickets();
-$result = $test->test();
+$test = new Freshdesk();

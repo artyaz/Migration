@@ -167,8 +167,8 @@ class Freshdesk extends Connector
 }
 
 $freshdeskCredentials = [
-    'apikey' => 'MHVtg3Fyk6vuvfDVNs0:X',
-    'url' => 'https://joeroc.freshdesk.com/api/v2/'
+    'apikey' => '',
+    'url' => 'https://devncie.freshdesk.com/api/v2/'
 ];
 
 $migration = new Freshdesk($freshdeskCredentials);

@@ -2,6 +2,8 @@
 
 namespace API;
 
+use API\Migrate\Zendesk;
+
 class Freshdesk extends Connector
 {
     function __construct($credentials = []){
@@ -37,19 +39,23 @@ class Freshdesk extends Connector
 
     /**
      * @param int $id
-     * @return string
+     * @return array
      */
-    private function getTicketComments(int $id): string
+    private function getTicketComments(int $id): array
     {
-        $requestItem = $this->connect('tickets/' . $id . '/conversations', 'GET');
+        $requestItem = $this->iteratePagination('tickets/' . $id . '/conversations');
 
-        $comments = '';
+        $comments = [];
 
-        foreach ($requestItem as $comment)
-        {
-            $comments .= $comment['body_text'];
+        foreach ($requestItem as $item) {
+            $comment = [
+                'body' => $item['body_text'],
+                'author' => $item['user_id'],
+                'created_at' => $item['created_at'],
+
+            ];
+            $comments[] = $comment;
         }
-
         return $comments;
     }
 
@@ -58,8 +64,7 @@ class Freshdesk extends Connector
      * @return string
      */
     private function getTicketStatusById($id): string{
-        $statusMapping =
-        [
+        $statusMapping = [
             2 => 'Open',
             3 => 'Pending',
             4 => 'Resolved',
@@ -75,8 +80,7 @@ class Freshdesk extends Connector
      */
     private function getTicketPriorityById($id): string
     {
-        $priorityMapping =
-        [
+        $priorityMapping = [
             1 => 'Low',
             2 => 'Medium',
             3 => 'High',
@@ -118,8 +122,14 @@ class Freshdesk extends Connector
 
         do
         {
-            $pageHeader = sprintf('?per_page=1&page=%s', $page);
-            $requestItem = $this->connect($item . $pageHeader, 'GET');
+            $queryParams = [
+                'query' => [
+
+                    'page' => $page,
+                    'per_page' => 1
+                ]
+            ];
+            $requestItem = $this->connect($item, 'GET', $queryParams);
             $items = array_merge($items, $requestItem);
             $page++;
         } while (false === empty($requestItem));
@@ -141,22 +151,24 @@ class Freshdesk extends Connector
             $contact = $this->reviewContact($ticket['requester_id']);
 
             $readyTickets[] = [
-                'id' => $ticket['id'],
-                'subject' => $ticket['subject'],
-                'status' => $this->getTicketStatusById($ticket['status']),
-                'priority' => $this->getTicketPriorityById($ticket['priority']),
-                'agent_id' => $ticket['responder_id'],
-                'agent_name' => $this->getAgentById($ticket['responder_id'])['contact']['name'] ?? null,
-                'agent_email' => $this->getAgentById($ticket['responder_id'])['contact']['email'] ?? null,
-                'contact_id' => $contact['id'] ?? $ticket['responder_id'],
-                'contact_name' => $contact['name'],
-                'contact_email' => $contact['email'],
-                'group_id' => $ticket['group_id'],
-                'group_name' => $this->getGroupById($ticket['group_id'])['name'],
-                'company_id' => $ticket['company_id'],
-                'company_name' => $this->getCompanyById($ticket['company_id'])['name'] ?? null,
-                'description' => $this->getTicketDescription($ticket['id']),
-                'comments' => $this->getTicketComments($ticket['id']),
+                'id'              => $ticket['id'],
+                'subject'         => $ticket['subject'],
+                'created_at'      => $ticket['created_at'],
+                'status'          => $this->getTicketStatusById($ticket['status']),
+                'priority'        => $this->getTicketPriorityById($ticket['priority']),
+                'agent_id'        => $ticket['responder_id'],
+                'agent_name'      => $this->getAgentById($ticket['responder_id'])['contact']['name'] ?? null,
+                'agent_email'     => $this->getAgentById($ticket['responder_id'])['contact']['email'] ?? null,
+                'contact_id'      => $contact['id'] ?? $ticket['responder_id'],
+                'contact_name'    => $contact['name'],
+                'contact_email'   => $contact['email'],
+                'group_id'        => $ticket['group_id'],
+                'group_name'      => $this->getGroupById($ticket['group_id'])['name'],
+                'company_id'      => $ticket['company_id'],
+                'company_name'    => $this->getCompanyById($ticket['company_id'])['name'] ?? null,
+                'cf_ticket_notes' => $ticket['custom_fields']['cf_ticket_notes'] ?? null,
+                'description'     => $this->getTicketDescription($ticket['id']),
+                'comments'        => $this->getTicketComments($ticket['id']),
             ];
         }
         return $readyTickets;
@@ -166,16 +178,25 @@ class Freshdesk extends Connector
 
 }
 
+
+
+
+
 $freshdeskCredentials = [
-    'apikey' => '',
-    'url' => 'https://devncie.freshdesk.com/api/v2/'
+    'apikey' => base64_encode('C9eIqD2crcaRhAcnKI8R:X'),
+    'url' => 'https://joeroc.freshdesk.com/api/v2/'
 ];
+
+$zendeskCredentials = [
+    'apikey' => 'Basic ' . base64_encode('qa@help-desk-migration.com/token:wsQQ0Xu6rQOQPTB50Auj5ev3Vj3QZWDe3AZUUvyS'),
+    'url' => 'https://helpdeskmigrationservice1652109111.zendesk.com/api/v2/'
+];
+
+$zendesk = new Zendesk($zendeskCredentials);
 
 $migration = new Freshdesk($freshdeskCredentials);
 
-$releaseCSV = new ReleaseCSV();
-
-$releaseCSV->formatCSV($migration->getTickets());
+$zendesk->importTicket($migration->getTickets());
 
 
 

@@ -1,6 +1,6 @@
-"Ticket ID",Subject,Status,Priority,"Agent ID","Agent Name","Agent Email","Contact ID","Contact Name","Contact Email","Group ID","Group Name","Company ID","Company Name",Description,Comments
-3,"Test Email: Need account statement",Open,Urgent,,,,202008701090,"Larc Beneeth",finipo4742@joeroc.com,202000123723,Escalations,,,"Hello,  I raised a request via your online banking services for my last 6 months account statement. I require this document for my visa application.  Can you share it with me?  Thanks, Larc",
-2,"Received a broken TV",Open,Urgent,,,,202008701094,"Sarah James",sarah.james@freshdesk.com,202000123723,Escalations,,,"Hi,
+"Ticket ID",Subject,Status,Priority,"Agent ID","Agent Name","Agent Email","Contact ID","Contact Name","Contact Email","Group ID","Group Name","Company ID","Company Name",cf_Ticket_Notes,Description,Comments
+3,"Test Email: Need account statement",Open,Urgent,,,,202008701090,"Larc Beneeth",finipo4742@joeroc.com,202000123723,Escalations,,,"Do not respond","Hello,  I raised a request via your online banking services for my last 6 months account statement. I require this document for my visa application.  Can you share it with me?  Thanks, Larc",
+2,"Received a broken TV",Open,Urgent,,,,202008701094,"Sarah James",sarah.james@freshdesk.com,202000123723,Escalations,,,,"Hi,
 
 The television I ordered from your site was delivered with a cracked screen. I need some help with a refund or a replacement.
 
@@ -8,7 +8,7 @@ Here is the order number FD07062010
 
 Thanks,
 Sarah",
-1,"Email address change",Open,Medium,,,,202008701091,"Emily Garcia",emily.garcia@freshdesk.com,202000123723,Escalations,,,"Hi,
+1,"Email address change",Open,Medium,,,,202008701091,"Emily Garcia",emily.garcia@freshdesk.com,202000123723,Escalations,,,,"Hi,
 
 I need to update my email address. I want to know if I'll lose access to my account if I change it. I've added quite a few products to my cart and don't want to look for them again.
 
@@ -16,4 +16,3 @@ It would be great to continue using this account with my new email address. Plea
 
 Regards,
 Emily Garcia","Hi Emily,    The good news is that you will not lose the items in your cart when you change your email address.   A verification email will be sent to your new email address when you update it. Once you successfully verify your new email address, you can access your account as usual.   If you have any other questions, we're always here to help.   Thank you,  Customer Service"
-e"

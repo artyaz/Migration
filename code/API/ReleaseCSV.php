@@ -12,7 +12,7 @@ class ReleaseCSV
     {
         $resultCSV = fopen("/code/API/results.csv", "c");
 
-        $headers = array('Ticket ID', 'Subject', 'Status', 'Priority', 'Agent ID', 'Agent Name', 'Agent Email', 'Contact ID', 'Contact Name', 'Contact Email', 'Group ID', 'Group Name', 'Company ID', 'Company Name', 'Description', 'Comments');
+        $headers = array('Ticket ID', 'Subject', 'Status', 'Priority', 'Agent ID', 'Agent Name', 'Agent Email', 'Contact ID', 'Contact Name', 'Contact Email', 'Group ID', 'Group Name', 'Company ID', 'Company Name', 'cf_Ticket_Notes', 'Description', 'Comments');
 
         fputcsv($resultCSV, $headers);
 

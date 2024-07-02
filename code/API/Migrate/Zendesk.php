@@ -20,7 +20,7 @@ class Zendesk extends Connector {
     private function verifyMapAbility($email, $name, $oldId): array
     {
         $user = $this->connect('users/search', 'GET', ['query' => ['query' => 'email:"' . $email . '"']]);
-        if(count($user['users'])) {
+        if(count($user['users']) === 1 && $user['users'][0]['email'] === $email) {
             return ['oldID' => $oldId, 'newID' => $user['users']['0']['id']];
         } else {
             $newUser = $this->connect('users', 'POST', [], ['user' => ['name' => $name, 'email' => $email]]);
@@ -33,15 +33,11 @@ class Zendesk extends Connector {
      * @param $mapping
      * @return array
      */
-    private function includeComments($comments, $mapping): array
+    private function includeComments(&$comments, $mapping): array
     {
-        $outputComments = [];
-
-        foreach ($comments as $comment)
+        foreach ($comments as &$comment)
         {
-            $commentUploads = [];
-
-            if($comment['attachments'] ?? null)
+            if(false === empty($comment['attachments']))
             {
                 foreach ($comment['attachments'] as $attachment)
                 {
@@ -51,18 +47,19 @@ class Zendesk extends Connector {
                         [ 'query' => ['filename' => $attachment['name']]],
                         $file, 'application/binary', false);
 
-                    $commentUploads[] = $uploadResult['upload']['token'];
+                    $comment['uploads'] = $uploadResult['upload']['token'];
                 }
             }
 
-            $rtComment['author_id']  = $this->mapping($mapping, $comment['author'] ?? null);
-            $rtComment['created_at'] = $comment['created_at'];
-            $rtComment['value']      = $comment['body'];
-            $rtComment['uploads']    = $commentUploads;
-            $outputComments[]        = $rtComment;
+            $comment = [
+                'author_id'  => $this->mapping($mapping, $comment['author'] ?? null),
+                'created_at' => $comment['created_at'],
+                'value'      => $comment['body'],
+                'uploads'    => $comment['uploads'] ?? []
+            ];
         }
 
-        return $outputComments;
+        return $comments;
     }
 
     /**
@@ -70,20 +67,18 @@ class Zendesk extends Connector {
      * @param $ticket
      * @return array
      */
-    private function customFieldsMapping($mapping, $ticket): array
+    private function customFieldsMapping($mapping, &$ticket): array
     {
-        $outputMapping = [];
-
         foreach ($mapping as $sourceName => $targetName)
         {
             $rtCCField = [
                 'id'    => $targetName,
                 'value' => $ticket[$sourceName]
             ];
-            $outputMapping[] = $rtCCField;
+            $ticket['custom_fields'] = $rtCCField;
         }
 
-        return $outputMapping;
+        return $ticket;
     }
 
     /**
@@ -106,7 +101,9 @@ class Zendesk extends Connector {
      */
     public function importTicket($tickets): void
     {
-        foreach ($tickets as $ticket) {
+        foreach ($tickets as &$ticket) {
+
+
             $mapping = [
                 'users' => [
                     'default'        => '393588259920',
@@ -122,18 +119,20 @@ class Zendesk extends Connector {
             $newUser = $this->verifyMapAbility($ticket['contact_email'], $ticket['contact_name'], $ticket['contact_id']);
             $mapping['users'][$newUser['oldID']] = $newUser['newID'];
 
-            $nt                    = &$newTicket['ticket'];
-            $nt['subject']         = $ticket['subject'];
-            $nt['requester_id']    = $mapping['users'][$ticket['contact_id']];
-            $nt['priority']        = $ticket['priority'];
-            $nt['status']          = $ticket['status'];
-            $nt['created_at']      = $ticket['created_at'];
-            $nt['assignee_id']     = $this->mapping($mapping['users'], $ticket['assignee_id'] ?? null);
-            $nt['group_id']        = $this->mapping($mapping['groups'], $ticket['group_id']);
-            $nt['comments']        = $this->includeComments($ticket['comments'], $mapping['users']);
-            $nt['custom_fields']   = $this->customFieldsMapping($mapping['fields'], $ticket);
+            $ticket['ticket'] = [
+                'subject' => $ticket['subject'],
+                'tags'    => $ticket['tags'],
+                'requester_id' => $mapping['users'][$ticket['contact_id']],
+                'priority' => $ticket['priority'],
+                'status' => $ticket['status'],
+                'created_at' => $ticket['created_at'],
+                'assignee_id' => $this->mapping($mapping['users'], $ticket['assignee_id'] ?? null),
+                'group_id' => $this->mapping($mapping['groups'], $ticket['group_id']),
+                'comments' => $this->includeComments($ticket['comments'], $mapping['users']),
+                'custom_fields' => $this->customFieldsMapping($mapping['fields'], $ticket),
+            ];
 
-            $this->connect('imports/tickets', 'POST', [], $newTicket);
+            $this->connect('imports/tickets', 'POST', [], $ticket);
             unset($nt);
         }
     }

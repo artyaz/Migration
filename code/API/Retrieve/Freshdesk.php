@@ -60,6 +60,8 @@ class Freshdesk extends Connector
 
         $descriptionAuthor = $ticket['source'] === 10 ? $ticket['responder_id'] : $ticket['requester_id'];
 
+        $comments = [];
+
         $comments[] = [
             'body' => $ticket['description_text'],
             'author' => $descriptionAuthor,
@@ -117,7 +119,7 @@ class Freshdesk extends Connector
     private function reviewContact($requesterID): array
     {
         $request = $this->connect('contacts/' . $requesterID, 'GET');
-        if($request){
+        if(false === empty($request)){
             return $request;
         } else {
             return array_merge($this->connect('agents/' . $requesterID, 'GET')['contact'], $this->connect('agents/' . $requesterID, 'GET'));

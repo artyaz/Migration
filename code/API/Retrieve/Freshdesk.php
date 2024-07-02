@@ -181,7 +181,7 @@ class Freshdesk extends Connector
                 'group_name'      => $this->getGroupById($ticket['group_id'])['name'] ?? null,
                 'company_id'      => $ticket['company_id'],
                 'company_name'    => $this->getCompanyById($ticket['company_id'])['name'] ?? null,
-                'cf_ticket_notes' => $ticket['custom_fields']['cf_ticket_notes'] ?? null,
+                'cf_ticketnotes' => $ticket['custom_fields']['cf_ticketnotes'] ?? null,
                 'comments'        => $this->getTicketComments($ticket['id']),
             ];
         }

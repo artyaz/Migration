@@ -19,7 +19,7 @@ class Zendesk extends Connector {
      */
     private function verifyMapAbility($email, $name, $oldId): array
     {
-        $user = $this->connect('users/search', 'GET', ['query' => ['query' => $email]]);
+        $user = $this->connect('users/search', 'GET', ['query' => ['query' => 'email:"' . $email . '"']]);
         if(count($user['users'])) {
             return ['oldID' => $oldId, 'newID' => $user['users']['0']['id']];
         } else {
@@ -36,7 +36,7 @@ class Zendesk extends Connector {
     private function mapping($mapping, $id): string
     {
         if($mapping[$id] ?? null) {
-            return $id;
+            return $mapping[$id];
         } else {
             return $mapping['default'];
         }
@@ -72,14 +72,24 @@ class Zendesk extends Connector {
             $rt['priority'] = $ticket['priority'];
             $rt['status'] = $ticket['status'];
             $rt['created_at'] = $ticket['created_at'];
-            $rt['description'] = $ticket['description'];
             $rt['assignee_id'] = $this->mapping($mapping['users'], $ticket['assignee_id'] ?? null);
             $rt['group_id'] = $this->mapping($mapping['groups'], $ticket['group_id']);
             foreach ($ticket['comments'] as $comment) {
+                $commentUploads = [];
+                if($comment['attachments'] ?? null) {
+                    foreach ($comment['attachments'] as $attachment) {
+                        $file = fopen($attachment['attachment_url'], 'r');
+                        $uploadResult = $this->connect('uploads.json', 'POST',
+                            [ 'query' => ['filename' => $attachment['name']]],
+                                 $file, 'application/binary', false);
+                        $commentUploads[] = $uploadResult['upload']['token'];
+                    }
+                }
                 $rtComment = [];
-                $rtComment['author_id'] = $this->mapping($mapping['users'], $comment['author_id'] ?? null);
+                $rtComment['author_id'] = $this->mapping($mapping['users'], $comment['author'] ?? null);
                 $rtComment['created_at'] = $comment['created_at'];
                 $rtComment['value'] = $comment['body'];
+                $rtComment['uploads'] = $commentUploads;
                 $rt['comments'][] = $rtComment;
             }
             foreach ($mapping['fields'] as $sourceName => $targetName) {

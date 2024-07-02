@@ -1,7 +1,8 @@
 <?php
-
+namespace API;
 include __DIR__ . '/vendor/autoload.php';
 
-use API\Freshdesk;
+use API\Utils\InitiateMigration;
 
-$test = new Freshdesk();
+$test = new InitiateMigration();
+$test ->startMigration();

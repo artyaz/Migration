@@ -92,7 +92,6 @@ class Zendesk extends Connector {
                     }
                 }
 
-                $rtComment = [];
                 $rtComment['author_id']  = $this->mapping($mapping['users'], $comment['author'] ?? null);
                 $rtComment['created_at'] = $comment['created_at'];
                 $rtComment['value']      = $comment['body'];

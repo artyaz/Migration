@@ -109,10 +109,10 @@ class Zendesk extends Connector {
         foreach ($tickets as $ticket) {
             $mapping = [
                 'users' => [
-                    'default' => '393588259920',
+                    'default'        => '393588259920',
                 ],
                 'groups' => [
-                    'default' => '5481923040914',
+                    'default'        => '5481923040914',
                 ],
                 'fields' => [
                     'cf_ticketnotes' => '18055606057874'

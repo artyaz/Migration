@@ -111,5 +111,5 @@ class Zendesk extends Connector {
             $this->connect('imports/tickets', 'POST', [], $readyTickets);
         }
     }
-
 }
+//

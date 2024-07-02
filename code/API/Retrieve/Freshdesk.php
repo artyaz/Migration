@@ -188,7 +188,6 @@ class Freshdesk extends Connector
         return $readyTickets;
     }
 }
-//
 
 
 

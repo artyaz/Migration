@@ -1,6 +1,8 @@
 <?php
 
-namespace API;
+namespace API\Retreive;
+
+use API\Connector;
 
 class Freshdesk extends Connector
 {

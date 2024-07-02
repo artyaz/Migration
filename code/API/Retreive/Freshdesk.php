@@ -56,14 +56,13 @@ class Freshdesk extends Connector
         ];
 
         foreach ($requestItem as $item) {
-            $comment = [
+            $comments[] = [
                 'body' => $item['body_text'],
                 'author' => $item['user_id'],
                 'created_at' => $item['created_at'],
                 'attachments' => $item['attachments']
 
             ];
-            $comments[] = $comment;
         }
         return $comments;
     }

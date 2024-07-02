@@ -1,6 +1,6 @@
 <?php
 
-namespace API\Retreive;
+namespace API\Retrieve;
 
 use API\Connector;
 
@@ -38,14 +38,25 @@ class Freshdesk extends Connector
     }
 
     /**
-     * @param array $ticket
+     * @param int|null $id
      * @return array
      */
-    private function getTicketComments(array $ticket): array
-    {
-        $requestItem = $this->iteratePagination('tickets/' . $ticket['id'] . '/conversations');
+    private function getTicket(?int $id): array {
+        return $this->connect('tickets/' . $id, 'GET', ['query' => ['include' => 'conversations']]);
+    }
 
-        $comments = [];
+    /**
+     * @param $id
+     * @return array
+     */
+    private function getTicketComments($id): array
+    {
+
+        $ticket = $this->getTicket($id);
+
+        $sourceFormattedComments = count($ticket['conversations']) >= 10 ?
+            $this->iteratePagination('tickets/' . $id . '/conversations') :
+            $ticket['conversations'];
 
         $descriptionAuthor = $ticket['source'] === 10 ? $ticket['responder_id'] : $ticket['requester_id'];
 
@@ -53,9 +64,10 @@ class Freshdesk extends Connector
             'body' => $ticket['description_text'],
             'author' => $descriptionAuthor,
             'created_at' => $ticket['created_at'],
+            'attachments' => $ticket['attachments'] ?? null
         ];
 
-        foreach ($requestItem as $item) {
+        foreach ($sourceFormattedComments as $item) {
             $comments[] = [
                 'body' => $item['body_text'],
                 'author' => $item['user_id'],
@@ -127,9 +139,11 @@ class Freshdesk extends Connector
                 'query' => [
                     'page' => $page,
                     'per_page' => 10,
-                    ...$additionalParams,
                 ]
             ];
+
+            $queryParams['query'] = array_merge($queryParams['query'], $additionalParams);
+
             $requestItem = $this->connect($item, 'GET', $queryParams);
             $items = array_merge($items, $requestItem);
             $page++;
@@ -164,11 +178,11 @@ class Freshdesk extends Connector
                 'contact_name'    => $contact['name'],
                 'contact_email'   => $contact['email'],
                 'group_id'        => $ticket['group_id'],
-                'group_name'      => $this->getGroupById($ticket['group_id'])['name'],
+                'group_name'      => $this->getGroupById($ticket['group_id'])['name'] ?? null,
                 'company_id'      => $ticket['company_id'],
                 'company_name'    => $this->getCompanyById($ticket['company_id'])['name'] ?? null,
                 'cf_ticket_notes' => $ticket['custom_fields']['cf_ticket_notes'] ?? null,
-                'comments'        => $this->getTicketComments($ticket),
+                'comments'        => $this->getTicketComments($ticket['id']),
             ];
         }
         return $readyTickets;

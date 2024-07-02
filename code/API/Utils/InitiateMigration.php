@@ -1,7 +1,7 @@
 <?php
 namespace API\Utils;
 use API\Migrate\Zendesk;
-use API\Retreive\Freshdesk;
+use API\Retrieve\Freshdesk;
 
 class InitiateMigration {
     function startMigration(): void

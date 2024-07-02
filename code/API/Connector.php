@@ -40,12 +40,12 @@ abstract class Connector
 
     protected function connect(string $path, string $method, mixed $params = [], mixed $requestBody = [], string $contentType = 'application/json', $jsonEncodeBody = true): array
     {
-        $uri = sprintf('%s%s', $this->credentials['url'], $path);
+        $uri = $this->credentials['url'] . $path;
         $client = new Client(
             [
-                'base_uri' => sprintf('%s%s', $this->credentials['url'], $path),
+                'base_uri' => $uri,
                 'headers' => [
-                    'Authorization' => sprintf('%s', $this->credentials['apikey']),
+                    'Authorization' => $this->credentials['apikey'],
                     'Content-Type' => $contentType,
                 ],
                 'body' => $jsonEncodeBody ? json_encode($requestBody) : $requestBody,

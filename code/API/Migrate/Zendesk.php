@@ -48,7 +48,6 @@ class Zendesk extends Connector {
      */
     public function importTicket($tickets): void
     {
-        $readyTickets = [];
         foreach ($tickets as $ticket) {
             $mapping = [
                 'users' => [
@@ -67,41 +66,49 @@ class Zendesk extends Connector {
 
             $rt = [];
 
-            $rt['subject'] = $ticket['subject'];
+            $rt['subject']      = $ticket['subject'];
             $rt['requester_id'] = $mapping['users'][$ticket['contact_id']];
-            $rt['priority'] = $ticket['priority'];
-            $rt['status'] = $ticket['status'];
-            $rt['created_at'] = $ticket['created_at'];
-            $rt['assignee_id'] = $this->mapping($mapping['users'], $ticket['assignee_id'] ?? null);
-            $rt['group_id'] = $this->mapping($mapping['groups'], $ticket['group_id']);
-            foreach ($ticket['comments'] as $comment) {
+            $rt['priority']     = $ticket['priority'];
+            $rt['status']       = $ticket['status'];
+            $rt['created_at']   = $ticket['created_at'];
+            $rt['assignee_id']  = $this->mapping($mapping['users'], $ticket['assignee_id'] ?? null);
+            $rt['group_id']     = $this->mapping($mapping['groups'], $ticket['group_id']);
+
+            foreach ($ticket['comments'] as $comment)
+            {
                 $commentUploads = [];
-                if($comment['attachments'] ?? null) {
-                    foreach ($comment['attachments'] as $attachment) {
+
+                if($comment['attachments'] ?? null)
+                {
+                    foreach ($comment['attachments'] as $attachment)
+                    {
                         $file = fopen($attachment['attachment_url'], 'r');
+
                         $uploadResult = $this->connect('uploads.json', 'POST',
                             [ 'query' => ['filename' => $attachment['name']]],
-                                 $file, 'application/binary', false);
+                            $file, 'application/binary', false);
+
                         $commentUploads[] = $uploadResult['upload']['token'];
                     }
                 }
+
                 $rtComment = [];
-                $rtComment['author_id'] = $this->mapping($mapping['users'], $comment['author'] ?? null);
+                $rtComment['author_id']  = $this->mapping($mapping['users'], $comment['author'] ?? null);
                 $rtComment['created_at'] = $comment['created_at'];
-                $rtComment['value'] = $comment['body'];
-                $rtComment['uploads'] = $commentUploads;
-                $rt['comments'][] = $rtComment;
+                $rtComment['value']      = $comment['body'];
+                $rtComment['uploads']    = $commentUploads;
+                $rt['comments'][]        = $rtComment;
             }
-            foreach ($mapping['fields'] as $sourceName => $targetName) {
+            foreach ($mapping['fields'] as $sourceName => $targetName)
+            {
                 $rtCCField = [
-                    'id' => $targetName,
+                    'id'    => $targetName,
                     'value' => $ticket[$sourceName]
                 ];
                 $rt['custom_fields'][] = $rtCCField;
             }
             $readyTickets['ticket'] = $rt;
             $this->connect('imports/tickets', 'POST', [], $readyTickets);
-            unset($readyTickets['tickets']);
         }
     }
 
